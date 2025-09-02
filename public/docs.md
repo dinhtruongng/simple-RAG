@@ -41,7 +41,6 @@
     - Answer Relevancy
     - Faithfulness
     - Context Relevancy
-    - Correctness (EM/F1)
     - Noise sensitivity (optional)
 
 ### Component wise
@@ -49,7 +48,7 @@
 ![Eval metrics](img/eval.png "Classification of IR metrics")
 
 - Metrics
-    - Recall@k, MRR, MAP, nDCG 
+    - Recall@k, MRR, MAP, nDCG (currently not implemented since not universally to method)
 
 - Link for [metric reference](https://www.pinecone.io/learn/offline-evaluation/)
 
