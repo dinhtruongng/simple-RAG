@@ -42,6 +42,7 @@
     - Faithfulness
     - Context Relevancy
     - Noise sensitivity (optional)
+- Judge: Deepseek V3
 
 ### Component wise
 
@@ -83,6 +84,16 @@
 ### Axis 5: Agentic
 
 ### Axis 6: metadata filtering
+
+## Tracing
+- Langfuse
+
+## guardrails
+
+
+## Models
+- LLM: Mistral Large
+- Embedding: Qwen 3 Embedding 0.6B
 
 ## TO-DO
 - [ ] implement eval pipeline
