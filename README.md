@@ -1,3 +1,7 @@
+## Goals
+1. An minimal, extensible repo for experimenting and evaluating RAG techniques and datasets.
+
+
 ## Reported results
 
 | Method | Faithfulness | Answer Relevancy | Context Relevancy |
