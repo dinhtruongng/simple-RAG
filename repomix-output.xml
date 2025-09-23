@@ -1,0 +1,491 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+The content has been processed where line numbers have been added.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: temp/**, pixi.lock
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Line numbers have been added to the beginning of each line
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+configs/
+  experiments/
+    canonical.yaml
+  config.yaml
+rag_lab/
+  contracts/
+    document.py
+    eval.py
+    generation.py
+    hit.py
+    index.py
+    query.py
+  core/
+    IChunker.py
+    IEvaluator.py
+    IGenerator.py
+    IIndexer.py
+    IQueryTransform.py
+    IReranker.py
+    IRetrievers.py
+.gitattributes
+.gitignore
+pyproject.toml
+README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="configs/experiments/canonical.yaml">
+ 1: seed: 42
+ 2: mode: evaluate        # or "index", "retrieve", "generate"
+ 3: limit_queries: 100    # fast sanity runs
+ 4: report:
+ 5:   save_json: true
+ 6:   save_table: true
+ 7: 
+ 8: # lightweight knobs that you often sweep
+ 9: top_k:
+10:   initial: 50
+11:   rerank: 20
+12: 
+13: latency_budget_ms: 1500
+14: notes: "baseline dense->rerank on HotpotQA dev"
+</file>
+
+<file path="configs/config.yaml">
+ 1: defaults:
+ 2:   - dataset:
+ 3:   - retriever:
+ 4:   - chunker:
+ 5:   - prompts:
+ 6:   - reranker:
+ 7:   - _self_
+ 8: 
+ 9: hydra:
+10:   run:
+11:     dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${dataset.name}_${retriever.name}_${reranker.name}
+12:   job:
+13:     chdir: true
+</file>
+
+<file path="rag_lab/contracts/hit.py">
+ 1: from typing import Any, Dict, Optional
+ 2: 
+ 3: from pydantic import BaseModel, ConfigDict, Field
+ 4: 
+ 5: 
+ 6: class DocHit(BaseModel):
+ 7:     model_config = ConfigDict(frozen=True)
+ 8:     document_id: str = Field(..., description="ID of matched doc or chunk")
+ 9:     score: float = Field(..., description="Higher is better, normalized per retriever")
+10:     text: Optional[str] = None
+11:     metadata: Dict[str, Any] = Field(default_factory=dict)
+</file>
+
+<file path="rag_lab/contracts/query.py">
+ 1: from typing import Any, Dict, Optional
+ 2: 
+ 3: from pydantic import BaseModel, ConfigDict, Field
+ 4: 
+ 5: 
+ 6: class Query(BaseModel):
+ 7:     model_config = ConfigDict(frozen=True)
+ 8:     text: str = Field(..., description="User query string")
+ 9:     metadata: Dict[str, Any] = Field(default_factory=dict)
+10:     # For routing/AB tests
+11:     tag: Optional[str] = None
+</file>
+
+<file path="rag_lab/core/IChunker.py">
+ 1: from typing import Iterator, List, Protocol, Sequence, Union, runtime_checkable
+ 2: 
+ 3: from rag_lab.contracts.document import Chunk, Document
+ 4: 
+ 5: 
+ 6: @runtime_checkable
+ 7: class IChunker(Protocol):
+ 8:     """Protocol defining the interface for document chunking operations.
+ 9: 
+10:     This interface provides methods for splitting documents into chunks and
+11:     optionally compressing them to fit within token limits.
+12:     """
+13: 
+14:     name: str
+15: 
+16:     def split(self, docs: Union[Sequence[Document], Iterator[Document]]) -> List[Chunk]:
+17:         """Split documents into chunks.
+18: 
+19:         Args:
+20:             docs: A sequence or iterator of Document objects to be chunked.
+21:                   Supports both Sequence[Document] and Iterator[Document] for memory efficiency.
+22: 
+23:         Returns:
+24:             List[Chunk]: A list of Chunk objects, each containing the chunked text
+25:                         and metadata including the original document ID.
+26: 
+27:         Note:
+28:             Each Chunk already contains the document ID, so there's no need to
+29:             preserve alignment between input documents and output chunks.
+30: 
+31:         Raises:
+32:             ValueError: If any document is invalid or cannot be processed.
+33:             RuntimeError: If chunking fails due to resource constraints.
+34:         """
+35:         ...
+36: 
+37:     def compress(
+38:         self, chunks: Union[Sequence[Chunk], Iterator[Chunk]], max_token: int
+39:     ) -> List[Chunk]:
+40:         """Compress chunks to fit within a maximum token limit.
+41: 
+42:         This optional method allows for context compression to reduce the size
+43:         of chunks while preserving important information.
+44: 
+45:         Args:
+46:             chunks: A sequence or iterator of Chunk objects to compress.
+47:             max_token: Maximum number of tokens allowed per chunk.
+48: 
+49:         Returns:
+50:             List[Chunk]: A list of compressed Chunk objects. If compression is not
+51:                         applicable or needed, implementations should return the
+52:                         original chunks unchanged (pass-through behavior).
+53: 
+54:         Note:
+55:             This is an optional hook with pass-through default behavior in implementations.
+56:             Implementations may choose to merge, truncate, or summarize chunks.
+57: 
+58:         Raises:
+59:             ValueError: If max_token is invalid (e.g., negative or zero).
+60:         """
+61:         ...
+</file>
+
+<file path="rag_lab/core/IQueryTransform.py">
+ 1: from typing import List, Protocol, Sequence, runtime_checkable
+ 2: 
+ 3: from rag_lab.contracts.query import Query
+ 4: 
+ 5: 
+ 6: @runtime_checkable
+ 7: class IQueryTransform(Protocol):
+ 8:     name: str
+ 9: 
+10:     def transform(self, queries: Sequence[Query]) -> List[Query]:
+11:         """E.g., HyDE, paraphrase/PRF, routing (may add metadata tags)."""
+12:         ...
+</file>
+
+<file path="rag_lab/core/IReranker.py">
+ 1: from typing import List, Protocol, Sequence, runtime_checkable
+ 2: 
+ 3: from rag_lab.contracts.hit import DocHit
+ 4: from rag_lab.contracts.query import Query
+ 5: 
+ 6: 
+ 7: @runtime_checkable
+ 8: class IReranker(Protocol):
+ 9:     name: str
+10: 
+11:     def rerank(
+12:         self, query: Sequence[Query], hits: Sequence[Sequence[DocHit]], top_k: int = 10
+13:     ) -> List[List[DocHit]]: ...
+</file>
+
+<file path="rag_lab/core/IRetrievers.py">
+ 1: from typing import List, Protocol, Sequence, runtime_checkable
+ 2: 
+ 3: from rag_lab.contracts.hit import DocHit
+ 4: from rag_lab.contracts.query import Query
+ 5: 
+ 6: 
+ 7: @runtime_checkable
+ 8: class IRetriever(Protocol):
+ 9:     name: str
+10: 
+11:     def retrieve(self, queries: Sequence[Query], top_k: int = 10) -> List[List[DocHit]]:
+12:         """Batch retrieve: returns a list of hits per query."""
+13:         ...
+</file>
+
+<file path=".gitattributes">
+1: # SCM syntax highlighting & preventing 3-way merges
+2: pixi.lock merge=binary linguist-language=YAML linguist-generated=true
+</file>
+
+<file path="rag_lab/contracts/document.py">
+ 1: from typing import Any, Dict, List, Optional
+ 2: 
+ 3: from pydantic import BaseModel, ConfigDict, Field
+ 4: 
+ 5: 
+ 6: class Document(BaseModel):
+ 7:     model_config = ConfigDict(frozen=True)
+ 8:     id: str = Field(..., description="Stable document ID")
+ 9:     text: str = Field(..., description="Raw text of the document")
+10:     metadata: Dict[str, Any] = Field(default_factory=dict)
+11: 
+12: 
+13: class Chunk(BaseModel):
+14:     model_config = ConfigDict(frozen=True)
+15:     id: str
+16:     document_id: str
+17:     text: str
+18:     metadata: Dict[str, Any] = Field(default_factory=dict)
+19:     # Optional vector for precomputed embeddings (multi-vector allowed)
+20:     vectors: Optional[List[List[float]]] = None
+</file>
+
+<file path="rag_lab/contracts/eval.py">
+ 1: from typing import Any, Dict, Optional
+ 2: 
+ 3: from pydantic import BaseModel, ConfigDict
+ 4: 
+ 5: 
+ 6: class IRMetrics(BaseModel):
+ 7:     model_config = ConfigDict(frozen=True)
+ 8:     recall_at_k: Dict[int, float]
+ 9:     ndcg_at_k: Dict[int, float]
+10:     mrr: Optional[float] = None
+11: 
+12: 
+13: class RAGMetrics(BaseModel):
+14:     model_config = ConfigDict(frozen=True)
+15:     faithfulness: float
+16:     answer_relevancy: float
+17:     context_precision: Optional[float] = None
+18:     context_recall: Optional[float] = None
+19: 
+20: 
+21: class EvaluationResult(BaseModel):
+22:     model_config = ConfigDict(frozen=True)
+23:     dataset_name: str
+24:     split: str
+25:     ir: IRMetrics
+26:     rag: Optional[RAGMetrics] = None
+27:     notes: Dict[str, Any] = {}
+</file>
+
+<file path="rag_lab/contracts/generation.py">
+ 1: from typing import Any, Dict, List, Literal
+ 2: 
+ 3: from pydantic import BaseModel, ConfigDict, Field
+ 4: 
+ 5: Role = Literal["system", "user", "assistant"]
+ 6: 
+ 7: 
+ 8: class Message(BaseModel):
+ 9:     model_config = ConfigDict(frozen=True)
+10:     role: Role
+11:     content: str
+12: 
+13: 
+14: class Prompt(BaseModel):
+15:     model_config = ConfigDict(frozen=True)
+16:     messages: List[Message]
+17:     version: str = "v1"
+18: 
+19: 
+20: class GenerationRequest(BaseModel):
+21:     model_config = ConfigDict(frozen=True)
+22:     prompt: Prompt
+23:     context: List[str] = Field(default_factory=list)
+24:     max_tokens: int = 512
+25:     temperature: float = 0.2
+26: 
+27: 
+28: class GenerationResponse(BaseModel):
+29:     model_config = ConfigDict(frozen=True)
+30:     text: str
+31:     tokens_in: int
+32:     tokens_out: int
+33:     metadata: Dict[str, Any] = Field(default_factory=dict)
+</file>
+
+<file path="rag_lab/contracts/index.py">
+ 1: from typing import Dict, List, Optional
+ 2: 
+ 3: from pydantic import BaseModel, ConfigDict
+ 4: 
+ 5: 
+ 6: class IndexAddRequest(BaseModel):
+ 7:     model_config = ConfigDict(frozen=True)
+ 8:     chunks: List["Chunk"]
+ 9:     upsert: bool = True
+10: 
+11: 
+12: class IndexAddResponse(BaseModel):
+13:     model_config = ConfigDict(frozen=True)
+14:     added: int
+15:     failed: int = 0
+16: 
+17: 
+18: class IndexSearchRequest(BaseModel):
+19:     model_config = ConfigDict(frozen=True)
+20:     # Either vector or sparse (BM25) terms — your indexer decides
+21:     vectors: Optional[List[List[float]]] = None  # one or more vectors
+22:     sparse_terms: Optional[Dict[str, float]] = None
+23:     top_k: int = 10
+24: 
+25: 
+26: class IndexSearchResult(BaseModel):
+27:     model_config = ConfigDict(frozen=True)
+28:     hits: List["DocHit"]
+29: 
+30: 
+31: # avoid circular refs
+32: from .document import Chunk
+33: from .hit import DocHit
+34: 
+35: IndexAddRequest.model_rebuild()
+36: IndexSearchResult.model_rebuild()
+</file>
+
+<file path="rag_lab/core/IEvaluator.py">
+ 1: from typing import Protocol, Sequence, runtime_checkable
+ 2: 
+ 3: from rag_lab.contracts.document import Document
+ 4: from rag_lab.contracts.eval import EvaluationResult
+ 5: from rag_lab.contracts.query import Query
+ 6: 
+ 7: 
+ 8: @runtime_checkable
+ 9: class IEvaluator(Protocol):
+10:     name: str
+11: 
+12:     def evaluate(
+13:         self, dataset_name: str, queries: Sequence[Query], docs: Sequence[Document]
+14:     ) -> EvaluationResult: ...
+</file>
+
+<file path="rag_lab/core/IGenerator.py">
+ 1: from typing import Protocol, runtime_checkable
+ 2: 
+ 3: from rag_lab.contracts.generation import GenerationRequest, GenerationResponse
+ 4: 
+ 5: 
+ 6: @runtime_checkable
+ 7: class IGenerator(Protocol):
+ 8:     name: str
+ 9:     model_id: str
+10: 
+11:     def generate(self, request: GenerationRequest) -> GenerationResponse: ...
+</file>
+
+<file path="rag_lab/core/IIndexer.py">
+ 1: from typing import Protocol, runtime_checkable
+ 2: 
+ 3: from rag_lab.contracts.index import (
+ 4:     IndexAddRequest,
+ 5:     IndexAddResponse,
+ 6:     IndexSearchRequest,
+ 7:     IndexSearchResult,
+ 8: )
+ 9: 
+10: 
+11: @runtime_checkable
+12: class IIndexer(Protocol):
+13:     name: str
+14:     kind: str  # "pgvector", "milvus", etc.
+15: 
+16:     def add(self, request: IndexAddRequest) -> IndexAddResponse: ...
+17:     def search(self, request: IndexSearchRequest) -> IndexSearchResult: ...
+</file>
+
+<file path=".gitignore">
+ 1: # pixi environments
+ 2: .pixi
+ 3: *.egg-info
+ 4: 
+ 5: # local notes
+ 6: notes.md
+ 7: eval/note.md
+ 8: 
+ 9: # env
+10: .env
+11: 
+12: # temp files
+13: temp
+</file>
+
+<file path="pyproject.toml">
+ 1: [project]
+ 2: authors = [{name = "dinhtruongng", email = "tonytruong23305@gmail.com"}]
+ 3: dependencies = []
+ 4: name = "simple-RAG"
+ 5: requires-python = "== 3.11"
+ 6: version = "0.1.0"
+ 7: 
+ 8: [build-system]
+ 9: build-backend = "hatchling.build"
+10: requires = ["hatchling"]
+11: 
+12: [tool.pixi.project]
+13: channels = ["conda-forge"]
+14: platforms = ["linux-64"]
+15: 
+16: [tool.pixi.pypi-dependencies]
+17: simple_rag = { path = ".", editable = true }
+18: 
+19: [tool.pixi.tasks]
+20: 
+21: [tool.pixi.dependencies]
+22: openai = ">=1.102.0,<2"
+23: ragas = ">=0.3.2,<0.4"
+24: hydra-core = ">=1.3.2,<2"
+</file>
+
+<file path="README.md">
+ 1: ## Goals
+ 2: 1. An minimal, extensible repo for experimenting and evaluating RAG techniques and datasets.
+ 3: 
+ 4: 
+ 5: ## Reported results
+ 6: 
+ 7: | Method | Faithfulness | Answer Relevancy | Context Relevancy |
+ 8: |:-------------:|:--------------:|:--------------:|:--------------:|
+ 9: | Vector search | 10 | 20 | 30
+10: | Fixed chunks |
+11: | Semantic chunks |
+12: | Metadata filtering |
+13: | Reranking |
+14: | Small-to-big |
+</file>
+
+</files>

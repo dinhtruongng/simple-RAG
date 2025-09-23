@@ -4,10 +4,12 @@ defaults:
   - chunker:
   - prompts:
   - reranker:
+  - indexer:
+  - generator:
   - _self_
 
 hydra:
   run:
-    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${dataset.name}_${retriever.name}_${reranker.name}
+    dir: dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${dataset.name}_${retriever.name}_${reranker.name}_${indexer.name}_${generator.name}
   job:
     chdir: true

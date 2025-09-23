@@ -35,16 +35,16 @@ class IChunker(Protocol):
         ...
 
     def compress(
-        self, chunks: Union[Sequence[Chunk], Iterator[Chunk]], max_token: int
+        self, chunks: Union[Sequence[Chunk], Iterator[Chunk]], max_tokens: int
     ) -> List[Chunk]:
-        """Compress chunks to fit within a maximum token limit.
+        """Compress chunks to fit within a maximum token limit (per chunk).
 
         This optional method allows for context compression to reduce the size
         of chunks while preserving important information.
 
         Args:
             chunks: A sequence or iterator of Chunk objects to compress.
-            max_token: Maximum number of tokens allowed per chunk.
+            max_tokens: Maximum tokens allowed per chunk.
 
         Returns:
             List[Chunk]: A list of compressed Chunk objects. If compression is not
@@ -54,8 +54,11 @@ class IChunker(Protocol):
         Note:
             This is an optional hook with pass-through default behavior in implementations.
             Implementations may choose to merge, truncate, or summarize chunks.
+            When the content *cannot* be made to fit (e.g., even a single sentence exceeds
+            the budget), implementations MUST fall back to truncation (head-first) unless
+            configured otherwise via implementation-specific settings.
 
         Raises:
-            ValueError: If max_token is invalid (e.g., negative or zero).
+            ValueError: If max_tokens is invalid (e.g., negative or zero).
         """
         ...
