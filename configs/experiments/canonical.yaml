@@ -1,0 +1,14 @@
+seed: 42
+mode: evaluate        # or "index", "retrieve", "generate"
+limit_queries: 100    # fast sanity runs
+report:
+  save_json: true
+  save_table: true
+
+# lightweight knobs that you often sweep
+top_k:
+  initial: 50
+  rerank: 20
+
+latency_budget_ms: 1500
+notes: "baseline dense->rerank on HotpotQA dev"

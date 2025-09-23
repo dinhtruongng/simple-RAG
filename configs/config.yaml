@@ -1,0 +1,13 @@
+defaults:
+  - dataset:
+  - retriever:
+  - chunker:
+  - prompts:
+  - reranker:
+  - _self_
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${dataset.name}_${retriever.name}_${reranker.name}
+  job:
+    chdir: true
