@@ -12,7 +12,7 @@ class Document(BaseModel):
 
 class Chunk(BaseModel):
     model_config = ConfigDict(frozen=True)
-    id: str
+    id: str = Field(..., description="Globally unique chunk ID")
     document_id: str
     text: str
     metadata: Dict[str, Any] = Field(default_factory=dict)

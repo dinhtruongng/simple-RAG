@@ -1,0 +1,3 @@
+version: v1
+system: "You are a concise QA assistant."
+user_template: "Question: {question}\nUse the context to answer."

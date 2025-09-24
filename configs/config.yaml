@@ -1,15 +1,15 @@
 defaults:
-  - dataset:
-  - retriever:
-  - chunker:
-  - prompts:
-  - reranker:
-  - indexer:
-  - generator:
+  - dataset: hotpot_mini
+  - retriever: bm25
+  - chunker: recursive
+  - prompts: base
+  - reranker: none
+  - indexer: inmemory
+  - generator: echo
   - _self_
 
 hydra:
   run:
-    dir: dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${dataset.name}_${retriever.name}_${reranker.name}_${indexer.name}_${generator.name}
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${dataset.name}_${retriever.name}_${reranker.name}_${indexer.name}_${generator.name}
   job:
     chdir: true
