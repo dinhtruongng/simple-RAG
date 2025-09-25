@@ -8,6 +8,7 @@ from rag_lab.contracts.query import Query
 
 class HotpotMini:
     name = "hotpotqa"
+    _LAST_QRELS = {}
 
     def __init__(self, split: str = "validation", max_examples: Optional[int] = 500):
         self.split = split
@@ -18,6 +19,7 @@ class HotpotMini:
         raw_data = self._load_raw_dataset()
         queries = self._process_queries(raw_data)
         documents, qrels = self._process_documents(raw_data)
+        HotpotMini._LAST_QRELS = qrels
 
         return DatasetBatch(
             name=self.NAME, split=self.split, queries=queries, documents=documents, qrels=qrels
