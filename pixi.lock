@@ -3495,7 +3495,7 @@ packages:
 - pypi: .
   name: simple-rag
   version: 0.1.0
-  sha256: 2e3b217af4aa3c4b50323ffbfd26b89d24688241c1ae8207055a5ee8c561524c
+  sha256: 5854c6d6d01c7b795bda5597d101f060f66a45e59979a5381e7e253b270827bc
   requires_python: ==3.11
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda

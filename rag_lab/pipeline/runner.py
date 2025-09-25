@@ -11,6 +11,7 @@ from rag_lab.contracts.document import Chunk, Document
 from rag_lab.contracts.eval import EvaluationResult
 from rag_lab.contracts.generation import GenerationRequest, Message, Prompt
 from rag_lab.contracts.hit import DocHit
+from rag_lab.contracts.index import IndexAddRequest
 from rag_lab.contracts.pipeline import ComponentInfo, RunRecord
 from rag_lab.contracts.query import Query
 from rag_lab.pipeline import registry
@@ -45,7 +46,10 @@ def run_pipeline(cfg: Dict[str, Any]) -> None:
     # 3) Index
     with span("index", spans, meta={"n_chunks": len(chunks)}):
         indexer = registry.build_indexer(cfg["indexer"])
-        indexer.add(TypeAdapter(List[Chunk]).validate_python(chunks))  # InMemory stub ignores
+        add_request = TypeAdapter(IndexAddRequest).validate_python(
+            {"chunks": chunks, "upsert": True}
+        )
+        indexer.add(add_request)
 
     # 4) Retrieve
     with span("retrieve", spans, meta={"top_k_initial": cfg["top_k"]["initial"]}):
