@@ -12,11 +12,15 @@ class IREvaluator:
     name = "ir_basic"
 
     def evaluate(
-        self, dataset_name: str, queries: Sequence[Query], docs: Sequence[Document]
+        self,
+        dataset_name: str,
+        queries: Sequence[Query],
+        docs: Sequence[Document],
+        retrieval_path: str,
     ) -> EvaluationResult:
         # Read reranked results from retrieval.csv (keeps evaluator decoupled)
         reranked: Dict[str, List[str]] = defaultdict(list)
-        with open("retrieval.csv", "r", encoding="utf-8") as f:
+        with open(retrieval_path, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if row["stage"] == "reranked":
@@ -72,3 +76,6 @@ class IREvaluator:
             rag=None,
             notes={},
         )
+
+
+# print(isinstance(IREvaluator, IEvaluator))

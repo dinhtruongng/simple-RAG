@@ -22,7 +22,7 @@ class HotpotMini:
         HotpotMini._LAST_QRELS = qrels
 
         return DatasetBatch(
-            name=self.NAME, split=self.split, queries=queries, documents=documents, qrels=qrels
+            name=self.name, split=self.split, queries=queries, documents=documents, qrels=qrels
         )
 
     def _load_raw_dataset(self):
@@ -52,12 +52,15 @@ class HotpotMini:
         for i, row in enumerate(raw_data):
             query_id = f"q{i}"
             # Extract supporting fact titles for relevance determination
-            support_titles = {title for title, _ in row["supporting_facts"]}
+
+            support_titles = row["supporting_facts"]["title"]
             ctxs = row["context"]  # [[title, [sentences]], ...]
 
             query_doc_map = {}
-            for j, (title, sentences) in enumerate(ctxs):
+            for j in range(len(ctxs["title"])):
                 doc_id = f"d{i}_{j}"
+                title = ctxs["title"][j]
+                sentences = ctxs["sentences"][j]
                 documents.append(
                     Document(id=doc_id, text=" ".join(sentences), metadata={"title": title})
                 )

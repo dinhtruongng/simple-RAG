@@ -34,7 +34,7 @@ def run_pipeline(cfg: Dict[str, Any]) -> None:
     # 1) Dataset
     with span("load_dataset", spans):
         ds = registry.build_dataset(cfg["dataset"])
-        batch = ds.load(cfg["dataset"].get("split", "validation"))
+        batch = ds.load()
         queries: List[Query] = batch.queries[: cfg.get("limit_queries") or len(batch.queries)]
         docs: List[Document] = batch.documents
 
@@ -52,17 +52,18 @@ def run_pipeline(cfg: Dict[str, Any]) -> None:
         indexer.add(add_request)
 
     # 4) Retrieve
-    with span("retrieve", spans, meta={"top_k_initial": cfg["top_k"]["initial"]}):
+    with span("retrieve", spans, meta={"top_k_initial": cfg["experiments"]["top_k"]["initial"]}):
         retriever = registry.build_retriever(cfg["retriever"])
+        retriever.set_corpus(docs)  # for bm25 only
         initial_hits: List[List[DocHit]] = retriever.retrieve(
-            queries, top_k=cfg["top_k"]["initial"]
+            queries, top_k=cfg["experiments"]["top_k"]["initial"]
         )
 
     # 5) Rerank
-    with span("rerank", spans, meta={"top_k_rerank": cfg["top_k"]["rerank"]}):
+    with span("rerank", spans, meta={"top_k_rerank": cfg["experiments"]["top_k"]["rerank"]}):
         reranker = registry.build_reranker(cfg["reranker"])
         final_hits: List[List[DocHit]] = reranker.rerank(
-            queries, initial_hits, top_k=cfg["top_k"]["rerank"]
+            queries, initial_hits, top_k=cfg["experiments"]["top_k"]["rerank"]
         )
 
     # 6) Generate (stub)
@@ -89,13 +90,6 @@ def run_pipeline(cfg: Dict[str, Any]) -> None:
             resp = generator.generate(req)
             gen_rows.append((q.id, resp.text, resp.tokens_in, resp.tokens_out))
 
-    # 7) Evaluate (IR only for Sprint-1)
-    with span("evaluate", spans):
-        evaluator = registry.build_irevaluator()
-        eval_result: EvaluationResult = evaluator.evaluate(
-            batch.name, queries, docs
-        )  # IR eval uses saved rankings
-
     # Write artifacts
     # retrieval.csv
     with (outdir / "retrieval.csv").open("w", newline="", encoding="utf-8") as f:
@@ -114,6 +108,13 @@ def run_pipeline(cfg: Dict[str, Any]) -> None:
         w.writerow(["query_id", "answer_text", "tokens_in", "tokens_out"])
         w.writerows(gen_rows)
 
+    # 7) Evaluate (IR only for Sprint-1)
+    with span("evaluate", spans):
+        evaluator = registry.build_irevaluator()
+        eval_result: EvaluationResult = evaluator.evaluate(
+            batch.name, queries, docs, retrieval_path=f"{outdir}/retrieval.csv"
+        )  # IR eval uses saved rankings
+
     # metrics.json
     with (outdir / "metrics.json").open("w", encoding="utf-8") as f:
         json.dump(eval_result.model_dump(), f, indent=2)
@@ -122,7 +123,7 @@ def run_pipeline(cfg: Dict[str, Any]) -> None:
     record = RunRecord(
         run_id=datetime.now().strftime("%Y%m%d%H%M%S"),
         started_at=datetime.now(),
-        seed=cfg["seed"],
+        seed=cfg["experiments"]["seed"],
         dataset_name=batch.name,
         split=batch.split,
         components=components,

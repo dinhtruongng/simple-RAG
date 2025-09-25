@@ -6,6 +6,7 @@ defaults:
   - reranker: none
   - indexer: inmemory
   - generator: echo
+  - experiments: canonical
   - _self_
 
 hydra:

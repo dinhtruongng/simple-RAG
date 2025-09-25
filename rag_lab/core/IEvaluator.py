@@ -10,5 +10,9 @@ class IEvaluator(Protocol):
     name: str
 
     def evaluate(
-        self, dataset_name: str, queries: Sequence[Query], docs: Sequence[Document]
+        self,
+        dataset_name: str,
+        queries: Sequence[Query],
+        docs: Sequence[Document],
+        retrieval_path: str,
     ) -> EvaluationResult: ...

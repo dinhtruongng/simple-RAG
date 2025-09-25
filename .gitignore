@@ -15,3 +15,6 @@ temp
 
 # Python cache files
 __pycache__/
+
+# outputs
+outputs/
