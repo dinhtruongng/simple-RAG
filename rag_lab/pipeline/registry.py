@@ -20,7 +20,6 @@ from rag_lab.adapters.rerankers.none import NoOpReranker
 
 # Retrievers
 from rag_lab.adapters.retrievers.bm25 import BM25Retriever
-
 from rag_lab.core.dataset import DatasetAdapter
 from rag_lab.core.IChunker import IChunker
 from rag_lab.core.IEvaluator import IEvaluator
@@ -43,7 +42,7 @@ def build_indexer(cfg: Dict[str, Any]) -> IIndexer:
 
 
 def build_retriever(cfg: Dict[str, Any]) -> IRetriever:
-    return BM25Retriever(name=cfg.get("name"))
+    return BM25Retriever()
 
 
 def build_reranker(cfg: Dict[str, Any]) -> IReranker:

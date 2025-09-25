@@ -218,6 +218,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytz-2025.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pyyaml-6.0.2-py311h2dc5d0c_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ragas-0.3.2-pyhc455866_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/rank-bm25-0.2.2-pyh29332c3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/re2-2025.07.22-h5a314c3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/readline-8.2-h8c095d6_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/regex-2025.7.34-py311h49ec1c0_1.conda
@@ -3380,6 +3381,19 @@ packages:
   - pkg:pypi/ragas?source=hash-mapping
   size: 181335
   timestamp: 1755638030599
+- conda: https://conda.anaconda.org/conda-forge/noarch/rank-bm25-0.2.2-pyh29332c3_0.conda
+  sha256: c2378852395609bd73297ebba9e1093dc79e3e14f2397eef997e1597ab5d9240
+  md5: f5384e6c691fe49daede90c689ad6937
+  depends:
+  - python >=3.9
+  - numpy
+  - python
+  license: Apache-2.0
+  license_family: APACHE
+  purls:
+  - pkg:pypi/rank-bm25?source=hash-mapping
+  size: 19024
+  timestamp: 1740732639325
 - conda: https://conda.anaconda.org/conda-forge/linux-64/re2-2025.07.22-h5a314c3_0.conda
   sha256: 0e65b369dad6b161912e58aaa20e503534225d999b2a3eeedba438f0f3923c7e
   md5: 40a7d4cef7d034026e0d6b29af54b5ce
@@ -3495,7 +3509,7 @@ packages:
 - pypi: .
   name: simple-rag
   version: 0.1.0
-  sha256: 5854c6d6d01c7b795bda5597d101f060f66a45e59979a5381e7e253b270827bc
+  sha256: 204e32fbf19116d01ee6dc56bd743f0e2f65676a328ca8f3057979e644d61d33
   requires_python: ==3.11
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda

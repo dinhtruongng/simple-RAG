@@ -12,3 +12,6 @@ eval/note.md
 
 # temp files
 temp
+
+# Python cache files
+__pycache__/
