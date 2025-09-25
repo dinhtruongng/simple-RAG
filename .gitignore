@@ -9,6 +9,7 @@ eval/note.md
 
 # env
 .env
+.env.dev
 
 # temp files
 temp
